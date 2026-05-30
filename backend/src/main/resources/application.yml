@@ -1,0 +1,52 @@
+spring:
+  application:
+    name: secops-agent
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/secops
+    username: secops
+    password: secops123
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  redis:
+    host: localhost
+    port: 6379
+
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
+
+server:
+  port: 8080
+
+# 扫描引擎配置
+scanner:
+  nuclei:
+    path: /usr/local/bin/nuclei
+    templates-path: /root/nuclei-templates
+    rate-limit: 150
+    timeout: 300
+  subfinder:
+    path: /usr/local/bin/subfinder
+  naabu:
+    path: /usr/local/bin/naabu
+  httpx:
+    path: /usr/local/bin/httpx
+
+# Agent LLM 配置（开发阶段先用环境变量注入）
+agent:
+  llm:
+    provider: openai
+    model: gpt-4o-mini
+    api-key: ${OPENAI_API_KEY:}
+    base-url: ${OPENAI_BASE_URL:https://api.openai.com/v1}
