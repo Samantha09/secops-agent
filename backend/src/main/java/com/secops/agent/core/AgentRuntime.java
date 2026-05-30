@@ -1,5 +1,9 @@
 package com.secops.agent.core;
 
+import lombok.Data;
+
+import java.util.List;
+
 /**
  * Agent 运行时接口
  * ReAct 循环：思考(Thought) -> 行动(Action) -> 观察(Observation)

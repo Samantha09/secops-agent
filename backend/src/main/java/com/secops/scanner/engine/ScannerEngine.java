@@ -1,5 +1,7 @@
 package com.secops.scanner.engine;
 
+import lombok.Data;
+
 import java.util.concurrent.CompletableFuture;
 
 /**
