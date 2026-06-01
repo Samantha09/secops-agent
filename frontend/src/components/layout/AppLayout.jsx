@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
+import { useAuth } from '../../context/AuthContext'
 import {
   Layout,
   Menu,
@@ -7,6 +8,7 @@ import {
   Badge,
   Space,
   Typography,
+  Dropdown,
 } from 'antd'
 import {
   DashboardOutlined,
@@ -15,6 +17,7 @@ import {
   BugOutlined,
   FileTextOutlined,
   RobotOutlined,
+  LogoutOutlined,
 } from '@ant-design/icons'
 
 const { Header, Sider } = Layout
@@ -33,6 +36,11 @@ export default function AppLayout({ children }) {
   const [collapsed, setCollapsed] = useState(false)
   const navigate = useNavigate()
   const location = useLocation()
+  const { logout } = useAuth()
+
+  const userMenuItems = [
+    { key: 'logout', icon: <LogoutOutlined />, label: '退出登录', onClick: logout }
+  ]
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -76,7 +84,9 @@ export default function AppLayout({ children }) {
             <Badge count={5} size="small">
               <BugOutlined style={{ fontSize: 18 }} />
             </Badge>
-            <Avatar style={{ backgroundColor: '#1677ff' }}>S</Avatar>
+            <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
+              <Avatar style={{ backgroundColor: '#1677ff', cursor: 'pointer' }}>S</Avatar>
+            </Dropdown>
           </Space>
         </Header>
         {children}
