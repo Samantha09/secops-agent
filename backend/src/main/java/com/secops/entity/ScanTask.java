@@ -20,7 +20,7 @@ public class ScanTask {
     private String taskId;
 
     @ManyToOne
-    @JoinColumn(name = "target_id")
+    @JoinColumn(name = "target_id", nullable = false)
     private Target target;
 
     @Enumerated(EnumType.STRING)
