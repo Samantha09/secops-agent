@@ -1,5 +1,6 @@
 package com.secops.entity;
 
+import com.secops.entity.enums.TargetType;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
@@ -15,6 +16,10 @@ public class Target {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TargetType type = TargetType.DOMAIN;
 
     @Column(nullable = false, unique = true)
     private String domain;

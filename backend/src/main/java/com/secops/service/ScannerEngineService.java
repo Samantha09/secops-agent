@@ -4,6 +4,7 @@ import com.secops.entity.ScanTask;
 import com.secops.entity.Vulnerability;
 import com.secops.entity.enums.ScanStatus;
 import com.secops.entity.enums.Severity;
+import com.secops.entity.enums.TargetType;
 import com.secops.entity.enums.VulnStatus;
 import com.secops.repository.ScanTaskRepository;
 import com.secops.repository.VulnerabilityRepository;
@@ -49,22 +50,32 @@ public class ScannerEngineService {
             scanTaskRepository.save(task);
 
             String domain = task.getTarget().getDomain();
+            boolean isIp = task.getTarget().getType() == TargetType.IP;
             StringBuilder rawOutput = new StringBuilder();
 
-            // Step 1: Subfinder
-            if (!subfinderScanner.isAvailable()) {
-                throw new IllegalStateException("subfinder 未安装或不可用");
-            }
-            ScanResult subResult = subfinderScanner.scan(domain, new ScannerEngine.ScanOptions()).get();
-            task.setProgress(30);
-            rawOutput.append("Subfinder: ").append(subResult.getFindings().size()).append(" subdomains\n");
-            task.setRawOutput(rawOutput.toString());
-            scanTaskRepository.save(task);
+            String subdomains = domain;
 
-            String subdomains = subResult.getFindings().stream()
-                    .map(ScanResult.Finding::getMatched)
-                    .collect(Collectors.joining("\n"));
-            if (subdomains.isEmpty()) subdomains = domain;
+            // Step 1: Subfinder (跳过 IP 目标)
+            if (!isIp) {
+                if (!subfinderScanner.isAvailable()) {
+                    throw new IllegalStateException("subfinder 未安装或不可用");
+                }
+                ScanResult subResult = subfinderScanner.scan(domain, new ScannerEngine.ScanOptions()).get();
+                task.setProgress(30);
+                rawOutput.append("Subfinder: ").append(subResult.getFindings().size()).append(" subdomains\n");
+                task.setRawOutput(rawOutput.toString());
+                scanTaskRepository.save(task);
+
+                subdomains = subResult.getFindings().stream()
+                        .map(ScanResult.Finding::getMatched)
+                        .collect(Collectors.joining("\n"));
+                if (subdomains.isEmpty()) subdomains = domain;
+            } else {
+                task.setProgress(30);
+                rawOutput.append("Subfinder: skipped for IP target\n");
+                task.setRawOutput(rawOutput.toString());
+                scanTaskRepository.save(task);
+            }
 
             // Step 2: Naabu
             if (!naabuScanner.isAvailable()) {

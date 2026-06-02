@@ -8,6 +8,7 @@ import {
   Modal,
   Form,
   Input,
+  Select,
   message,
   Popconfirm,
   Typography,
@@ -18,8 +19,23 @@ import { listTargets, createTarget, verifyTarget, deleteTarget } from '../api/ta
 
 const { Text, Paragraph } = Typography
 
+const typeMap = {
+  DOMAIN: { text: '域名', color: 'blue' },
+  IP: { text: 'IP', color: 'purple' },
+}
+
 const columns = (onVerify, onDelete) => [
-  { title: '域名', dataIndex: 'domain', key: 'domain' },
+  {
+    title: '目标',
+    dataIndex: 'domain',
+    key: 'domain',
+  },
+  {
+    title: '类型',
+    dataIndex: 'type',
+    key: 'type',
+    render: (t) => <Tag color={typeMap[t]?.color}>{typeMap[t]?.text || t}</Tag>,
+  },
   {
     title: '验证状态',
     dataIndex: 'verified',
@@ -44,7 +60,7 @@ const columns = (onVerify, onDelete) => [
     key: 'action',
     render: (_, record) => (
       <Space>
-        {!record.verified && (
+        {!record.verified && record.type === 'DOMAIN' && (
           <Button
             type="link"
             icon={<CheckCircleOutlined />}
@@ -76,6 +92,7 @@ export default function Targets() {
   const [detailOpen, setDetailOpen] = useState(false)
   const [detailTarget, setDetailTarget] = useState(null)
   const [form] = Form.useForm()
+  const [targetType, setTargetType] = useState('DOMAIN')
 
   const fetchTargets = async () => {
     setLoading(true)
@@ -104,6 +121,7 @@ export default function Targets() {
         message.success('添加成功')
         setModalOpen(false)
         form.resetFields()
+        setTargetType('DOMAIN')
         setDetailTarget(res.data)
         setDetailOpen(true)
         fetchTargets()
@@ -147,6 +165,25 @@ export default function Targets() {
     }
   }
 
+  const validateDomainOrIp = (_, value) => {
+    const type = form.getFieldValue('type') || 'DOMAIN'
+    if (!value) return Promise.resolve()
+
+    const ipRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/
+    const domainRegex = /^(?!-)[A-Za-z0-9-]{1,63}(?<!-)\.(?!-)[A-Za-z0-9-]{1,63}(?<!-)(\.[A-Za-z0-9-]{1,63})*$/
+
+    if (type === 'IP') {
+      if (!ipRegex.test(value)) {
+        return Promise.reject(new Error('请输入有效的 IP 地址'))
+      }
+    } else {
+      if (!domainRegex.test(value)) {
+        return Promise.reject(new Error('域名格式不正确'))
+      }
+    }
+    return Promise.resolve()
+  }
+
   return (
     <div>
       <div
@@ -184,6 +221,7 @@ export default function Targets() {
         onCancel={() => {
           setModalOpen(false)
           form.resetFields()
+          setTargetType('DOMAIN')
         }}
         onOk={() => form.submit()}
         okText="添加"
@@ -191,18 +229,25 @@ export default function Targets() {
       >
         <Form form={form} layout="vertical" onFinish={handleCreate}>
           <Form.Item
+            name="type"
+            label="目标类型"
+            initialValue="DOMAIN"
+            rules={[{ required: true, message: '请选择目标类型' }]}
+          >
+            <Select onChange={(v) => setTargetType(v)}>
+              <Select.Option value="DOMAIN">域名</Select.Option>
+              <Select.Option value="IP">IP 地址</Select.Option>
+            </Select>
+          </Form.Item>
+          <Form.Item
             name="domain"
-            label="域名"
+            label={targetType === 'IP' ? 'IP 地址' : '域名'}
             rules={[
-              { required: true, message: '请输入域名' },
-              {
-                pattern:
-                  /^(?!-)[A-Za-z0-9-]{1,63}(?<!-)\.(?!-)[A-Za-z0-9-]{1,63}(?<!-)(\.[A-Za-z0-9-]{1,63})*$/,
-                message: '域名格式不正确',
-              },
+              { required: true, message: targetType === 'IP' ? '请输入 IP 地址' : '请输入域名' },
+              { validator: validateDomainOrIp },
             ]}
           >
-            <Input placeholder="example.com" />
+            <Input placeholder={targetType === 'IP' ? '127.0.0.1' : 'example.com'} />
           </Form.Item>
         </Form>
       </Modal>
@@ -215,7 +260,12 @@ export default function Targets() {
       >
         {detailTarget && (
           <Descriptions column={1} bordered>
-            <Descriptions.Item label="域名">{detailTarget.domain}</Descriptions.Item>
+            <Descriptions.Item label="目标">{detailTarget.domain}</Descriptions.Item>
+            <Descriptions.Item label="类型">
+              <Tag color={typeMap[detailTarget.type]?.color}>
+                {typeMap[detailTarget.type]?.text || detailTarget.type}
+              </Tag>
+            </Descriptions.Item>
             <Descriptions.Item label="验证状态">
               {detailTarget.verified ? (
                 <Tag color="green">已验证</Tag>
@@ -223,7 +273,7 @@ export default function Targets() {
                 <Tag color="orange">待验证</Tag>
               )}
             </Descriptions.Item>
-            {!detailTarget.verified && (
+            {!detailTarget.verified && detailTarget.type === 'DOMAIN' && (
               <Descriptions.Item label="TXT 验证记录">
                 <Paragraph copyable>{detailTarget.txtRecord}</Paragraph>
                 <Text type="secondary">

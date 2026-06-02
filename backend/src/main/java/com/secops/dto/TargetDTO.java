@@ -1,5 +1,6 @@
 package com.secops.dto;
 
+import com.secops.entity.enums.TargetType;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -7,6 +8,7 @@ import java.time.LocalDateTime;
 @Data
 public class TargetDTO {
     private Long id;
+    private TargetType type;
     private String domain;
     private boolean verified;
     private String txtRecord;

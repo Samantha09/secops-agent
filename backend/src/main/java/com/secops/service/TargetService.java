@@ -3,6 +3,7 @@ package com.secops.service;
 import com.secops.dto.CreateTargetRequest;
 import com.secops.dto.TargetDTO;
 import com.secops.entity.Target;
+import com.secops.entity.enums.TargetType;
 import com.secops.repository.TargetRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -34,12 +35,19 @@ public class TargetService {
     @Transactional
     public TargetDTO create(CreateTargetRequest request) {
         if (targetRepository.existsByDomain(request.getDomain())) {
-            throw new IllegalArgumentException("该域名已存在");
+            throw new IllegalArgumentException("该目标已存在");
         }
 
         Target target = new Target();
         target.setDomain(request.getDomain());
-        target.setTxtRecord("secops-verify=" + UUID.randomUUID());
+        target.setType(TargetType.valueOf(request.getType()));
+
+        // IP 类型直接标记为已验证，无需 DNS TXT 验证
+        if (target.getType() == TargetType.IP) {
+            target.setVerified(true);
+        } else {
+            target.setTxtRecord("secops-verify=" + UUID.randomUUID());
+        }
 
         Target saved = targetRepository.save(target);
         return toDTO(saved);
@@ -51,6 +59,14 @@ public class TargetService {
                 .orElseThrow(() -> new EntityNotFoundException("目标不存在"));
 
         if (target.isVerified()) {
+            return toDTO(target);
+        }
+
+        // IP 类型直接通过验证
+        if (target.getType() == TargetType.IP) {
+            target.setVerified(true);
+            target.setTxtVerifiedAt(LocalDateTime.now());
+            targetRepository.save(target);
             return toDTO(target);
         }
 
@@ -92,6 +108,7 @@ public class TargetService {
     private TargetDTO toDTO(Target target) {
         TargetDTO dto = new TargetDTO();
         dto.setId(target.getId());
+        dto.setType(target.getType());
         dto.setDomain(target.getDomain());
         dto.setVerified(target.isVerified());
         dto.setTxtRecord(target.getTxtRecord());
