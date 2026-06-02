@@ -32,16 +32,16 @@ server:
 # 扫描引擎配置
 scanner:
   nuclei:
-    path: /usr/local/bin/nuclei
-    templates-path: /root/nuclei-templates
+    path: /tmp/mock-nuclei
+    templates-path: /tmp
     rate-limit: 150
     timeout: 300
   subfinder:
-    path: /usr/local/bin/subfinder
+    path: /tmp/mock-subfinder
   naabu:
-    path: /usr/local/bin/naabu
+    path: /tmp/mock-naabu
   httpx:
-    path: /usr/local/bin/httpx
+    path: /tmp/mock-httpx
 
 # Agent LLM 配置（开发阶段先用环境变量注入）
 agent:
