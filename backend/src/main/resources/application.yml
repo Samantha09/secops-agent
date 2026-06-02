@@ -27,7 +27,7 @@ spring:
       max-request-size: 100MB
 
 server:
-  port: 8080
+  port: 8081
 
 # 扫描引擎配置
 scanner:
