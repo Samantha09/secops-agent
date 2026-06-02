@@ -8,6 +8,7 @@ import lombok.Data;
 import java.time.LocalDateTime;
 
 @Entity
+@Table(name = "scan_tasks")
 @Data
 public class ScanTask {
 
@@ -15,7 +16,7 @@ public class ScanTask {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true)
+    @Column(unique = true, nullable = false)
     private String taskId;
 
     @ManyToOne
