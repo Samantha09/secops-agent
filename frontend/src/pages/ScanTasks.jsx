@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react'
-import { Card, Button, Table, Tag, Progress, Space, Modal, Form, Select, message } from 'antd'
-import { PlayCircleOutlined } from '@ant-design/icons'
+import { Card, Button, Table, Tag, Progress, Space, Modal, Form, Select, message, Typography } from 'antd'
+import { PlayCircleOutlined, FileTextOutlined } from '@ant-design/icons'
 import client from '../api/client'
+
+const { Paragraph } = Typography
 
 const statusMap = {
   'PENDING': { text: '等待中', color: 'default' },
@@ -15,6 +17,8 @@ export default function ScanTasks() {
   const [targets, setTargets] = useState([])
   const [loading, setLoading] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
+  const [logOpen, setLogOpen] = useState(false)
+  const [logRecord, setLogRecord] = useState(null)
   const [form] = Form.useForm()
 
   const fetchTasks = async () => {
@@ -71,6 +75,11 @@ export default function ScanTasks() {
     }
   }
 
+  const handleViewLog = (record) => {
+    setLogRecord(record)
+    setLogOpen(true)
+  }
+
   const columns = [
     { title: '任务ID', dataIndex: 'taskId', key: 'taskId' },
     { title: '目标', dataIndex: ['target', 'domain'], key: 'target' },
@@ -82,7 +91,9 @@ export default function ScanTasks() {
     { title: '操作', key: 'action',
       render: (_, record) => (
         <Space>
-          <a>日志</a>
+          <Button type="link" icon={<FileTextOutlined />} onClick={() => handleViewLog(record)}>
+            日志
+          </Button>
           <a href={`/vulns?scanId=${record.id}`}>结果</a>
         </Space>
       ) },
@@ -114,6 +125,39 @@ export default function ScanTasks() {
             <Button type="primary" htmlType="submit" block>开始扫描</Button>
           </Form.Item>
         </Form>
+      </Modal>
+
+      <Modal
+        title={`扫描日志 - ${logRecord?.taskId || ''}`}
+        open={logOpen}
+        onCancel={() => setLogOpen(false)}
+        footer={null}
+        width={700}
+      >
+        {logRecord && (
+          <div>
+            <p><strong>状态:</strong> {statusMap[logRecord.status]?.text || logRecord.status}</p>
+            <p><strong>目标:</strong> {logRecord.target?.domain}</p>
+            {logRecord.errorMessage && (
+              <p style={{ color: '#cf1322' }}><strong>错误:</strong> {logRecord.errorMessage}</p>
+            )}
+            <Paragraph
+              copyable
+              style={{
+                background: '#f6f8fa',
+                padding: 12,
+                borderRadius: 6,
+                maxHeight: 400,
+                overflow: 'auto',
+                fontFamily: 'monospace',
+                fontSize: 12,
+                whiteSpace: 'pre-wrap',
+              }}
+            >
+              {logRecord.rawOutput || '暂无日志'}
+            </Paragraph>
+          </div>
+        )}
       </Modal>
     </div>
   )

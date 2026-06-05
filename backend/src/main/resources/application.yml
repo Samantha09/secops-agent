@@ -41,7 +41,7 @@ scanner:
   naabu:
     path: /tmp/mock-naabu
   httpx:
-    path: /tmp/mock-httpx
+    path: /home/san/.local/bin/httpx
 
 # Agent LLM 配置（开发阶段先用环境变量注入）
 agent:
