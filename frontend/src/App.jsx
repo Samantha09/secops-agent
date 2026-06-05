@@ -30,7 +30,7 @@ function App() {
       <Route path="*" element={
         <ProtectedRoute>
           <AppLayout>
-            <Content style={{ margin: '24px 16px', padding: 24, background: '#fff', borderRadius: 8 }}>
+            <Content style={{ margin: '16px 8px', padding: 16, background: '#fff', borderRadius: 8, overflow: 'auto' }}>
               <Routes>
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/targets" element={<Targets />} />

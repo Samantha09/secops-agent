@@ -95,7 +95,7 @@ export default function ScanTasks() {
         <Button type="primary" icon={<PlayCircleOutlined />} onClick={() => setModalOpen(true)}>发起扫描</Button>
       </div>
       <Card>
-        <Table columns={columns} dataSource={data} loading={loading} />
+        <Table columns={columns} dataSource={data} loading={loading} scroll={{ x: 'max-content' }} />
       </Card>
 
       <Modal title="发起扫描" open={modalOpen} onCancel={() => setModalOpen(false)} footer={null}>

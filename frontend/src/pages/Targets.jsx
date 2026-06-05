@@ -205,6 +205,7 @@ export default function Targets() {
           columns={columns(handleVerify, handleDelete)}
           dataSource={targets}
           loading={loading}
+          scroll={{ x: 'max-content' }}
           onRow={(record) => ({
             onClick: () => {
               setDetailTarget(record)

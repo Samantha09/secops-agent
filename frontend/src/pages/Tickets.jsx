@@ -149,7 +149,7 @@ export default function Tickets() {
     <div>
       <h2 style={{ marginBottom: 16 }}>修复工单</h2>
       <Card>
-        <Table columns={columns} dataSource={data} loading={loading} />
+        <Table columns={columns} dataSource={data} loading={loading} scroll={{ x: 'max-content' }} />
       </Card>
 
       <Modal title="编辑工单" open={editOpen} onCancel={() => setEditOpen(false)} onOk={() => form.submit()}>

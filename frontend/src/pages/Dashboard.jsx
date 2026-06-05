@@ -49,8 +49,8 @@ export default function Dashboard() {
   return (
     <div>
       <h2>安全仪表盘</h2>
-      <Row gutter={16} style={{ marginTop: 16 }}>
-        <Col span={6}>
+      <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
+        <Col xs={24} sm={12} lg={6}>
           <Card>
             <Statistic
               title="监控目标"
@@ -59,7 +59,7 @@ export default function Dashboard() {
             />
           </Card>
         </Col>
-        <Col span={6}>
+        <Col xs={24} sm={12} lg={6}>
           <Card>
             <Statistic
               title="扫描任务"
@@ -68,7 +68,7 @@ export default function Dashboard() {
             />
           </Card>
         </Col>
-        <Col span={6}>
+        <Col xs={24} sm={12} lg={6}>
           <Card>
             <Statistic
               title="高危漏洞"
@@ -78,7 +78,7 @@ export default function Dashboard() {
             />
           </Card>
         </Col>
-        <Col span={6}>
+        <Col xs={24} sm={12} lg={6}>
           <Card>
             <Statistic
               title="待修复工单"
@@ -89,8 +89,8 @@ export default function Dashboard() {
         </Col>
       </Row>
 
-      <Row gutter={16} style={{ marginTop: 16 }}>
-        <Col span={12}>
+      <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
+        <Col xs={24} lg={12}>
           <Card title="风险趋势" loading={loading}>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={stats.dailyVulnTrend}>
@@ -103,7 +103,7 @@ export default function Dashboard() {
             </ResponsiveContainer>
           </Card>
         </Col>
-        <Col span={12}>
+        <Col xs={24} lg={12}>
           <Card title="最新漏洞" loading={loading}>
             <List
               dataSource={stats.recentVulns}

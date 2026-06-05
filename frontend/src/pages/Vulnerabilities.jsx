@@ -151,7 +151,7 @@ export default function Vulnerabilities() {
     <div>
       <h2 style={{ marginBottom: 16 }}>漏洞管理</h2>
       <Card>
-        <Table columns={columns} dataSource={data} loading={loading} />
+        <Table columns={columns} dataSource={data} loading={loading} scroll={{ x: 'max-content' }} />
       </Card>
 
       <Modal
