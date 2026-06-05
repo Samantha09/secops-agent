@@ -95,7 +95,7 @@ public class ReActAgentRuntime implements AgentRuntime {
 
             List<Message> messages = new ArrayList<>();
             messages.add(new Message("system", "You are SecOps Agent, an intelligent security operations assistant. You help users analyze vulnerability scan results, provide remediation advice, and answer security questions. Think step by step."));
-            messages.add(new Message("user", context.getUserInput()));
+            messages.add(new Message("user", context.getQuery()));
 
             RequestBody body = new RequestBody(model, messages, true);
             String jsonBody = objectMapper.writeValueAsString(body);
