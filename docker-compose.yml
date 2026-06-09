@@ -12,12 +12,16 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - secops-net
 
   redis:
     image: redis:7-alpine
     container_name: secops-redis
     ports:
       - "6379:6379"
+    networks:
+      - secops-net
 
   backend:
     build: ./backend
@@ -30,9 +34,14 @@ services:
       SPRING_DATASOURCE_PASSWORD: secops123
       SPRING_REDIS_HOST: redis
       SPRING_REDIS_PORT: 6379
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - scan-workspace:/workspace
     depends_on:
       - postgres
       - redis
+    networks:
+      - secops-net
 
   frontend:
     build: ./frontend
@@ -41,6 +50,48 @@ services:
       - "3000:80"
     depends_on:
       - backend
+    networks:
+      - secops-net
+
+  nuclei:
+    image: projectdiscovery/nuclei:latest
+    container_name: secops-nuclei
+    volumes:
+      - nuclei-templates:/root/nuclei-templates
+      - scan-workspace:/workspace
+    command: ["sh", "-c", "nuclei -ut && sleep infinity"]
+    networks:
+      - secops-net
+
+  subfinder:
+    image: projectdiscovery/subfinder:latest
+    container_name: secops-subfinder
+    volumes:
+      - scan-workspace:/workspace
+    networks:
+      - secops-net
+
+  naabu:
+    image: projectdiscovery/naabu:latest
+    container_name: secops-naabu
+    volumes:
+      - scan-workspace:/workspace
+    networks:
+      - secops-net
+
+  httpx:
+    image: projectdiscovery/httpx:latest
+    container_name: secops-httpx
+    volumes:
+      - scan-workspace:/workspace
+    networks:
+      - secops-net
 
 volumes:
   postgres_data:
+  nuclei-templates:
+  scan-workspace:
+
+networks:
+  secops-net:
+    driver: bridge

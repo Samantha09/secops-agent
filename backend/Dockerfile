@@ -9,6 +9,9 @@ FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 COPY --from=builder /app/target/*.jar app.jar
 
+# 安装 docker-cli，使 backend 容器内可执行 docker exec
+RUN apk add --no-cache docker-cli
+
 # 安装扫描工具（可选，生产环境建议单独扫描节点）
 RUN apk add --no-cache nmap nmap-scripts
 
