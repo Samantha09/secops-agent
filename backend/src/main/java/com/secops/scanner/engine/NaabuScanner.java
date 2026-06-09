@@ -1,6 +1,5 @@
 package com.secops.scanner.engine;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.BufferedReader;
@@ -8,6 +7,7 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.UUID;
@@ -16,13 +16,14 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Naabu 端口扫描引擎适配器
- * 通过调用 naabu 二进制文件进行端口发现
+ * 通过 docker exec 调用 secops-naabu 容器内的 naabu 命令
  */
 @Component
 public class NaabuScanner implements ScannerEngine {
 
-    @Value("${scanner.naabu.path:/usr/local/bin/naabu}")
-    private String binaryPath;
+    private static final String CONTAINER_NAME = "secops-naabu";
+    private static final String BINARY = "naabu";
+    private static final String WORKSPACE = "/workspace";
 
     @Override
     public String getName() {
@@ -32,7 +33,7 @@ public class NaabuScanner implements ScannerEngine {
     @Override
     public boolean isAvailable() {
         try {
-            ProcessBuilder pb = new ProcessBuilder(binaryPath, "-version");
+            ProcessBuilder pb = new ProcessBuilder("docker", "exec", CONTAINER_NAME, BINARY, "-version");
             Process p = pb.start();
             boolean ok = p.waitFor(5, TimeUnit.SECONDS) && p.exitValue() == 0;
             p.destroyForcibly();
@@ -52,13 +53,16 @@ public class NaabuScanner implements ScannerEngine {
             result.setSuccess(true);
 
             ScanOptions scanOptions = options != null ? options : new ScanOptions();
-            Path tempFile = null;
+            String targetFileName = "naabu-targets-" + UUID.randomUUID() + ".txt";
+            Path targetFile = Paths.get(WORKSPACE, targetFileName);
 
             try {
-                tempFile = Files.createTempFile("naabu-targets-", ".txt");
-                Files.writeString(tempFile, target);
+                Files.writeString(targetFile, target);
 
-                ProcessBuilder pb = new ProcessBuilder(binaryPath, "-list", tempFile.toString(), "-p", "-");
+                ProcessBuilder pb = new ProcessBuilder(
+                        "docker", "exec", CONTAINER_NAME,
+                        BINARY, "-list", targetFile.toString(), "-p", "-", "-rate", "1000"
+                );
                 pb.redirectErrorStream(true);
                 Process process = pb.start();
 
@@ -81,19 +85,16 @@ public class NaabuScanner implements ScannerEngine {
                 boolean finished = process.waitFor(scanOptions.getTimeout(), TimeUnit.SECONDS);
                 if (!finished || process.exitValue() != 0) {
                     result.setSuccess(false);
-                    result.setErrorMessage(finished ? "naabu exited with code " + process.exitValue() : "naabu timed out");
+                    result.setErrorMessage(finished ? BINARY + " exited with code " + process.exitValue() : BINARY + " timed out");
                 }
                 result.setFindings(findings);
             } catch (Exception e) {
                 result.setSuccess(false);
                 result.setErrorMessage(e.getMessage());
             } finally {
-                if (tempFile != null) {
-                    try {
-                        Files.deleteIfExists(tempFile);
-                    } catch (Exception ignored) {
-                        // 忽略删除临时文件失败
-                    }
+                try {
+                    Files.deleteIfExists(targetFile);
+                } catch (Exception ignored) {
                 }
             }
 
