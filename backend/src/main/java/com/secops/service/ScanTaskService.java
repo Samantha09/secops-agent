@@ -41,7 +41,12 @@ public class ScanTaskService {
         task.setStatus(ScanStatus.PENDING);
         scanTaskRepository.save(task);
 
-        scannerEngineService.runFullScan(task);
+        switch (scanType) {
+            case FULL -> scannerEngineService.runFullScan(task);
+            case SUBDOMAIN -> scannerEngineService.runSubdomainScan(task);
+            case PORT -> scannerEngineService.runPortScan(task);
+            case VULN -> scannerEngineService.runVulnScan(task);
+        }
         return task;
     }
 
