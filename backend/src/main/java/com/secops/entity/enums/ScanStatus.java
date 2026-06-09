@@ -1,5 +1,5 @@
 package com.secops.entity.enums;
 
 public enum ScanStatus {
-    PENDING, RUNNING, COMPLETED, FAILED
+    PENDING, QUEUED, RUNNING, COMPLETED, FAILED
 }

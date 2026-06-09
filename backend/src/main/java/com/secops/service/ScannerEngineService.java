@@ -253,7 +253,7 @@ public class ScannerEngineService {
         boolean acquired = false;
         try {
             if (!scanSemaphore.tryAcquire()) {
-                task.setStatus(ScanStatus.PENDING);
+                task.setStatus(ScanStatus.QUEUED);
                 scanTaskRepository.save(task);
                 scanSemaphore.acquire();
             }
