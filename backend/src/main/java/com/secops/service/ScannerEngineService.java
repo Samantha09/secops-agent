@@ -39,6 +39,7 @@ public class ScannerEngineService {
     private final ScanTaskRepository scanTaskRepository;
     private final VulnerabilityRepository vulnerabilityRepository;
     private final ScanProgressWebSocketHandler webSocketHandler;
+    private final AgentScanAnalysisService agentScanAnalysisService;
 
     // 全局并发控制：最多同时执行 3 个扫描任务
     private final Semaphore scanSemaphore = new Semaphore(3);
@@ -47,7 +48,8 @@ public class ScannerEngineService {
                                 HttpxScanner httpxScanner, NucleiScanner nucleiScanner,
                                 ScanTaskRepository scanTaskRepository,
                                 VulnerabilityRepository vulnerabilityRepository,
-                                ScanProgressWebSocketHandler webSocketHandler) {
+                                ScanProgressWebSocketHandler webSocketHandler,
+                                AgentScanAnalysisService agentScanAnalysisService) {
         this.subfinderScanner = subfinderScanner;
         this.naabuScanner = naabuScanner;
         this.httpxScanner = httpxScanner;
@@ -55,6 +57,7 @@ public class ScannerEngineService {
         this.scanTaskRepository = scanTaskRepository;
         this.vulnerabilityRepository = vulnerabilityRepository;
         this.webSocketHandler = webSocketHandler;
+        this.agentScanAnalysisService = agentScanAnalysisService;
     }
 
     // ========== 四种扫描入口 ==========
@@ -270,6 +273,9 @@ public class ScannerEngineService {
         task.setRawOutput(rawOutput);
         scanTaskRepository.save(task);
         pushProgress(task, "COMPLETED", "扫描完成", 100);
+
+        // 触发 Agent 自动分析
+        agentScanAnalysisService.analyzeScanTask(task);
     }
 
     private void failTask(ScanTask task, String error) {
