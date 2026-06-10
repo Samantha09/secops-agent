@@ -26,6 +26,7 @@ const statusMap = {
   OPEN: '未修复',
   FIXED: '已修复',
   FALSE_POSITIVE: '误报',
+  REOPENED: '复现',
 }
 
 export default function Vulnerabilities() {
@@ -94,7 +95,33 @@ export default function Vulnerabilities() {
       title: '状态',
       dataIndex: 'status',
       key: 'status',
-      render: (s) => <Tag>{statusMap[s] || s}</Tag>,
+      render: (s) => {
+        const colorMap = {
+          OPEN: 'red',
+          FIXED: 'green',
+          FALSE_POSITIVE: 'default',
+          REOPENED: 'volcano',
+        }
+        return <Tag color={colorMap[s]}>{statusMap[s] || s}</Tag>
+      },
+    },
+    {
+      title: '首次发现',
+      dataIndex: 'firstFoundAt',
+      key: 'firstFoundAt',
+      render: (v) => (v ? new Date(v).toLocaleString() : '-'),
+    },
+    {
+      title: '最近发现',
+      dataIndex: 'lastFoundAt',
+      key: 'lastFoundAt',
+      render: (v) => (v ? new Date(v).toLocaleString() : '-'),
+    },
+    {
+      title: '复现次数',
+      dataIndex: 'reopenCount',
+      key: 'reopenCount',
+      render: (v) => v || 0,
     },
     {
       title: '发现时间',
@@ -174,6 +201,13 @@ export default function Vulnerabilities() {
             <Descriptions.Item label="扫描器">{detail.scanner}</Descriptions.Item>
             <Descriptions.Item label="匹配内容">{detail.matched}</Descriptions.Item>
             <Descriptions.Item label="描述">{detail.description}</Descriptions.Item>
+            <Descriptions.Item label="首次发现">
+              {detail.firstFoundAt ? new Date(detail.firstFoundAt).toLocaleString() : '-'}
+            </Descriptions.Item>
+            <Descriptions.Item label="最近发现">
+              {detail.lastFoundAt ? new Date(detail.lastFoundAt).toLocaleString() : '-'}
+            </Descriptions.Item>
+            <Descriptions.Item label="复现次数">{detail.reopenCount || 0}</Descriptions.Item>
             <Descriptions.Item label="发现时间">
               {detail.foundAt ? new Date(detail.foundAt).toLocaleString() : '-'}
             </Descriptions.Item>
