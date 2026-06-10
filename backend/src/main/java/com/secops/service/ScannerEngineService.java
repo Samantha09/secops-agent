@@ -6,6 +6,7 @@ import com.secops.entity.Vulnerability;
 import com.secops.entity.enums.ScanStatus;
 import com.secops.entity.enums.Severity;
 import com.secops.entity.enums.TargetType;
+import com.secops.entity.enums.VulnStatus;
 import com.secops.repository.ScanTaskRepository;
 import com.secops.repository.VulnerabilityRepository;
 import com.secops.scanner.engine.*;
@@ -19,6 +20,7 @@ import java.net.Socket;
 import java.net.URL;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.Semaphore;
 import java.util.stream.Collectors;
 
@@ -211,15 +213,7 @@ public class ScannerEngineService {
                 saveTask(task, rawOutput.toString());
 
                 for (ScanResult.Finding finding : vulnResult.getFindings()) {
-                    Vulnerability v = new Vulnerability();
-                    v.setName(finding.getName());
-                    v.setSeverity(parseSeverity(finding.getSeverity()));
-                    v.setDescription(finding.getDescription());
-                    v.setMatched(finding.getMatched());
-                    v.setTarget(task.getTarget().getDomain());
-                    v.setScanner("nuclei");
-                    v.setScanTask(task);
-                    vulnerabilityRepository.save(v);
+                    saveOrUpdateVulnerability(finding, task);
                 }
             } catch (Exception e) {
                 pushProgress(task, "VULN_SCAN", "Nuclei 执行失败: " + e.getMessage(), 90);
@@ -234,15 +228,7 @@ public class ScannerEngineService {
             saveTask(task, rawOutput.toString());
 
             for (ScanResult.Finding finding : findings) {
-                Vulnerability v = new Vulnerability();
-                v.setName(finding.getName());
-                v.setSeverity(parseSeverity(finding.getSeverity()));
-                v.setDescription(finding.getDescription());
-                v.setMatched(finding.getMatched());
-                v.setTarget(task.getTarget().getDomain());
-                v.setScanner("http-probe");
-                v.setScanTask(task);
-                vulnerabilityRepository.save(v);
+                saveOrUpdateVulnerability(finding, task, "http-probe");
             }
         }
     }
@@ -409,6 +395,45 @@ public class ScannerEngineService {
             }
         }
         return findings;
+    }
+
+    private void saveOrUpdateVulnerability(ScanResult.Finding finding, ScanTask task) {
+        saveOrUpdateVulnerability(finding, task, "nuclei");
+    }
+
+    private void saveOrUpdateVulnerability(ScanResult.Finding finding, ScanTask task, String scannerName) {
+        String target = task.getTarget().getDomain();
+        Optional<Vulnerability> existing = vulnerabilityRepository
+                .findByTargetAndNameAndMatched(target, finding.getName(), finding.getMatched());
+
+        if (existing.isPresent()) {
+            Vulnerability v = existing.get();
+            v.setLastFoundAt(LocalDateTime.now());
+            v.setScanTask(task);
+
+            if (v.getStatus() == VulnStatus.FIXED) {
+                v.setStatus(VulnStatus.REOPENED);
+                v.setReopenCount(v.getReopenCount() + 1);
+                pushProgress(task, "VULN_SCAN", "漏洞复现: " + finding.getName() + " (REOPENED)", 90);
+            } else {
+                pushProgress(task, "VULN_SCAN", "漏洞复现: " + finding.getName(), 90);
+            }
+            vulnerabilityRepository.save(v);
+        } else {
+            Vulnerability v = new Vulnerability();
+            v.setName(finding.getName());
+            v.setSeverity(parseSeverity(finding.getSeverity()));
+            v.setDescription(finding.getDescription());
+            v.setMatched(finding.getMatched());
+            v.setTarget(target);
+            v.setScanner(scannerName);
+            v.setScanTask(task);
+            v.setFirstFoundAt(LocalDateTime.now());
+            v.setLastFoundAt(LocalDateTime.now());
+            v.setReopenCount(0);
+            v.setStatus(VulnStatus.OPEN);
+            vulnerabilityRepository.save(v);
+        }
     }
 
     private Severity parseSeverity(String severity) {
