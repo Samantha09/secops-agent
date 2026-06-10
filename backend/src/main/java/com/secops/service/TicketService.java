@@ -5,10 +5,12 @@ import com.secops.entity.Vulnerability;
 import com.secops.entity.enums.TicketStatus;
 import com.secops.repository.TicketRepository;
 import com.secops.repository.VulnerabilityRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+@Slf4j
 @Service
 public class TicketService {
 
@@ -44,5 +46,26 @@ public class TicketService {
 
     public void delete(Long id) {
         ticketRepository.deleteById(id);
+    }
+
+    public Ticket createAutoTicket(Long vulnerabilityId, String remediationAdvice) {
+        Vulnerability vuln = vulnerabilityRepository.findById(vulnerabilityId)
+                .orElseThrow(() -> new IllegalArgumentException("漏洞不存在"));
+
+        // 检查是否已存在该漏洞的 OPEN 工单
+        List<Ticket> existing = ticketRepository.findByVulnerabilityId(vulnerabilityId);
+        boolean hasOpenTicket = existing.stream()
+                .anyMatch(t -> t.getStatus() != TicketStatus.CLOSED);
+        if (hasOpenTicket) {
+            log.info("漏洞 {} 已存在未关闭工单，跳过自动创建", vulnerabilityId);
+            return null;
+        }
+
+        Ticket ticket = new Ticket();
+        ticket.setTitle("[Auto] " + vuln.getName());
+        ticket.setPriority(vuln.getSeverity());
+        ticket.setVulnerability(vuln);
+        ticket.setStatus(TicketStatus.OPEN);
+        return ticketRepository.save(ticket);
     }
 }
