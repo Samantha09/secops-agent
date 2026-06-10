@@ -20,6 +20,10 @@ const stageMap = {
   'VULN_SCAN': '漏洞扫描',
   'COMPLETED': '扫描完成',
   'FAILED': '执行失败',
+  'AGENT_ANALYZING': 'Agent 分析中',
+  'AGENT_THINKING': 'Agent 思考中',
+  'AGENT_COMPLETE': '分析完成',
+  'AGENT_ERROR': '分析失败',
 }
 
 const WS_URL = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws/scans`
