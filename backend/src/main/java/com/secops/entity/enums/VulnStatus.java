@@ -1,5 +1,5 @@
 package com.secops.entity.enums;
 
 public enum VulnStatus {
-    OPEN, FIXED, FALSE_POSITIVE
+    OPEN, FIXED, FALSE_POSITIVE, REOPENED
 }
