@@ -36,6 +36,7 @@ class ScannerEngineServiceTest {
     @Mock ScanTaskRepository scanTaskRepository;
     @Mock VulnerabilityRepository vulnerabilityRepository;
     @Mock ScanProgressWebSocketHandler webSocketHandler;
+    @Mock AgentScanAnalysisService agentScanAnalysisService;
 
     @InjectMocks
     ScannerEngineService scannerEngineService;
